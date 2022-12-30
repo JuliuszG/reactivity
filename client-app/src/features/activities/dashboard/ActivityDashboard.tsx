@@ -1,38 +1,24 @@
+import { observer } from "mobx-react-lite";
 import { useRef } from "react";
 import { Grid, Ref, Sticky } from "semantic-ui-react";
 import { useWindowSize } from "../../../app/hooks/UseWindowSize";
 import { Activity } from "../../../app/models/activity";
+import { useStore } from "../../../app/stores/Store";
 import { ActivityDetails } from "../details/ActivityDetails";
 import { ActivityForm } from "../form/ActivityForm";
 import { ActivityList } from "./ActivityList";
 
 interface ActivityDashboardProps {
   activities: Activity[];
-  selectedActivity: Activity | undefined;
-  selectActivity: (id: string) => void;
-  cancelSelectedActivity: () => void;
-  editMode: boolean;
-  openEditMode: (id?: string) => void;
-  closeEditMode: () => void;
-  createOrEdit: (activity: Activity) => void;
-  deleteActivity: (id: string) => void;
-  submitting: boolean
 }
 
-export const ActivityDashboard = ({
+export const ActivityDashboard = observer(({
   activities,
-  selectActivity,
-  selectedActivity,
-  cancelSelectedActivity,
-  editMode,
-  openEditMode,
-  closeEditMode,
-  createOrEdit,
-  deleteActivity,
-  submitting
 }: ActivityDashboardProps) => {
   const gridRef = useRef<HTMLElement>(null);
-  const { width } = useWindowSize()
+  const { width } = useWindowSize();
+  const {activityStore} = useStore();
+  const { editMode } = activityStore;
 
   function checkIfCanAttach() {
     if(width) {
@@ -46,30 +32,16 @@ export const ActivityDashboard = ({
       
         <Grid doubling stackable reversed="mobile vertically">
           <Grid.Column width="10">
-            <ActivityList
-              activities={activities}
-              selectActivity={selectActivity}
-              deleteActivity={deleteActivity}
-              submitting={submitting}
-            />
+            <ActivityList />
           </Grid.Column>
           <Ref innerRef={gridRef}>
           <Grid.Column width="6">
             <Sticky active={checkIfCanAttach()} context={gridRef} offset={75}>
-              {selectedActivity && !editMode && (
-                <ActivityDetails
-                  activity={selectedActivity}
-                  cancelSelectedActivity={cancelSelectedActivity}
-                  openEditForm={openEditMode}
-                />
+              {!editMode && (
+                <ActivityDetails />
               )}
               {editMode && (
-                <ActivityForm
-                  closeEditForm={closeEditMode}
-                  selectedActivity={selectedActivity}
-                  createOrEdit={createOrEdit}
-                  submitting={submitting}
-                />
+                <ActivityForm />
               )}
             </Sticky>
           </Grid.Column>
@@ -80,4 +52,4 @@ export const ActivityDashboard = ({
   }
 
   return null;
-};
+});

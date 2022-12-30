@@ -36,7 +36,7 @@ const requests = {
 }
 
 const Activities = {
-    list: () => requests.get<Activity[]>('/activities').then(arr => arr.map(activity => ({ ...activity, date: activity.date.split("T")[0] }))),
+    list: () => requests.get<Activity[]>('/activities'),
     details: (id: string) => requests.get<Activity>(`/activities/${id}`),
     create: (activity: Activity) => requests.post<void, Activity>('/activities', activity),
     edit: (activity: Activity) => requests.put<void, Activity>(`/activities/${activity.id}`, activity),

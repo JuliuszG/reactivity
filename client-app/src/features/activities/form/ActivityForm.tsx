@@ -1,21 +1,13 @@
 import { useFormik } from "formik";
+import { observer } from "mobx-react-lite";
 import { useMemo } from "react";
 import { Button, Form, Segment } from "semantic-ui-react";
-import { Activity } from "../../../app/models/activity";
+import { useStore } from "../../../app/stores/Store";
 
-interface ActivityFormProps {
-  closeEditForm: () => void;
-  selectedActivity: Activity | undefined;
-  createOrEdit: (activity: Activity) => void;
-  submitting: boolean;
-}
+export const ActivityForm = observer(() => {
 
-export const ActivityForm = ({
-  closeEditForm,
-  selectedActivity,
-  createOrEdit,
-  submitting
-}: ActivityFormProps) => {
+  const {activityStore} = useStore();
+  const {selectedActivity, closeForm, createActivity, editActivity, loading} = activityStore;
 
   const initialValues = useMemo(
     () =>
@@ -34,7 +26,11 @@ export const ActivityForm = ({
   const formik = useFormik({
     initialValues,
     onSubmit: (values) => {
-      createOrEdit(values);
+     if(!values.id.length) {
+      createActivity(values);
+     } else {
+      editActivity(values);
+     }
     },
   });
 
@@ -78,14 +74,14 @@ export const ActivityForm = ({
           onChange={formik.handleChange}
           name="venue"
         />
-        <Button loading={submitting} floated="right" positive type="submit" content="Submit" />
+        <Button loading={loading} floated="right" positive type="submit" content="Submit" />
         <Button
           floated="right"
           type="button"
           content="Cancel"
-          onClick={closeEditForm}
+          onClick={closeForm}
         />
       </Form>
     </Segment>
   );
-};
+});
