@@ -1,5 +1,5 @@
 import { makeAutoObservable, runInAction } from "mobx";
-import { mapActivityDateStringToDate } from "../../features/activities/utility/mapActivityDateStringtoDate";
+import { mapActivitiesDateStringsToDates, mapActivityDateStringToDate } from "../../features/activities/utility/mapActivityDateStringtoDate";
 import agent from "../api/agent";
 import { Activity } from "../models/activity";
 import { v4 as uuidv4 } from "uuid";
@@ -23,9 +23,17 @@ export class ActivityStore {
     return this.activities.slice().sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
   }
 
+  get groupedActivities(): Record<string, Activity[]> {
+    return this.activitiesByDate.reduce((activities, activity) => {
+      const date = activity.date;
+      activities[date] = activities[date] ? [...activities[date], activity] : [activity];
+      return activities;
+    }, {} as {[key: string]: Activity[]})
+  }
+
   private fetchActivities = async (): Promise<void> => {
     const data = await agent.Activities.list();
-    const dataWithMappedDates = mapActivityDateStringToDate(data);
+    const dataWithMappedDates = mapActivitiesDateStringsToDates(data);
     runInAction(() => {
       this.activities = dataWithMappedDates;
     })
@@ -42,21 +50,22 @@ export class ActivityStore {
     }
   };
 
-  selectActivity = (id: string): void => {
-    this.selectedActivity = this.activities.find(activity => activity.id === id);
-  }
-
-  cancelSelectedActivity = (): void => {
-    this.selectedActivity = undefined;
-  }
-
-  openForm = (id?: string): void => {
-    id ? this.selectActivity(id) : this.cancelSelectedActivity();
-    this.editMode = true;
-  }
-
-  closeForm = (): void => {
-    this.editMode = false;
+  loadActivity = async (id: string): Promise<Activity | undefined> => {
+    this.setLoadingInitial(true);
+    let data: Activity;
+    try {
+      data = await agent.Activities.details(id);
+      runInAction(() => {
+        const dataWithMappedDates = mapActivityDateStringToDate(data);
+        this.selectedActivity = dataWithMappedDates;
+      })
+    } catch (error) {
+      console.error(error);
+    }
+    runInAction(() => {
+      this.setLoadingInitial(false);
+    })
+    return this.selectedActivity;
   }
 
   createActivity = async (activity: Activity): Promise<void> => {

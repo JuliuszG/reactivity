@@ -5,7 +5,7 @@ interface LoadingProps {
     content?: string
 }
 
-export const Loading = ({ inverted = true, content = "Loading..." } : LoadingProps) => {
+export const Loading = ({ inverted = false, content = "Loading..." } : LoadingProps) => {
   return (
     <Dimmer active inverted={inverted}>
         <Loader content={content} />

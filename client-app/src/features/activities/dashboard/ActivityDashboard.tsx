@@ -1,51 +1,32 @@
 import { observer } from "mobx-react-lite";
-import { useRef } from "react";
-import { Grid, Ref, Sticky } from "semantic-ui-react";
-import { useWindowSize } from "../../../app/hooks/UseWindowSize";
-import { Activity } from "../../../app/models/activity";
+import { useEffect } from "react";
+import { Grid } from "semantic-ui-react";
+import { Loading } from "../../../app/layout/Loading";
 import { useStore } from "../../../app/stores/Store";
-import { ActivityDetails } from "../details/ActivityDetails";
-import { ActivityForm } from "../form/ActivityForm";
+import { ActivityFilters } from "./ActivityFilters";
 import { ActivityList } from "./ActivityList";
 
-interface ActivityDashboardProps {
-  activities: Activity[];
-}
-
-export const ActivityDashboard = observer(({
-  activities,
-}: ActivityDashboardProps) => {
-  const gridRef = useRef<HTMLElement>(null);
-  const { width } = useWindowSize();
+export const ActivityDashboard = observer(() => {
   const {activityStore} = useStore();
-  const { editMode } = activityStore;
+  const { activities } = activityStore;
 
-  function checkIfCanAttach() {
-    if(width) {
-      return width > 756
-    }
-    return false
+  useEffect(() => {
+    activityStore.loadActivities();
+  }, [activityStore]);
+
+  if (activityStore.loadingInitial) {
+    return <Loading />;
   }
   
   if (activities.length > 0) {
     return (
-      
         <Grid doubling stackable reversed="mobile vertically">
-          <Grid.Column width="10">
+          <Grid.Column width={10}>
             <ActivityList />
           </Grid.Column>
-          <Ref innerRef={gridRef}>
-          <Grid.Column width="6">
-            <Sticky active={checkIfCanAttach()} context={gridRef} offset={75}>
-              {!editMode && (
-                <ActivityDetails />
-              )}
-              {editMode && (
-                <ActivityForm />
-              )}
-            </Sticky>
+          <Grid.Column width={6}>
+            <ActivityFilters />
           </Grid.Column>
-          </Ref>
         </Grid>
    
     );

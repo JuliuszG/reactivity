@@ -1,30 +1,44 @@
 import { observer } from "mobx-react-lite";
-import { Button, Card, Image } from "semantic-ui-react"
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Grid } from "semantic-ui-react"
+import { Loading } from "../../../app/layout/Loading";
 import { useStore } from "../../../app/stores/Store"
+import ActivityDetailsChat from "./ActivityDetailsChat";
+import ActivityDetailsHeader from "./ActivityDetailsHeader";
+import ActivityDetailsInfo from "./ActivityDetailsInfo";
+import ActivityDetailsSidebar from "./ActivityDetailsSidebar";
 
 export const ActivityDetails = observer(() => {
+  const {id} = useParams();
+  const navigateTo = useNavigate()
   const {activityStore} = useStore();
-  const {selectedActivity, openForm, cancelSelectedActivity} = activityStore
+  const {selectedActivity, loadActivity, loadingInitial} = activityStore;
+
+  useEffect(() => {
+    if(id) {
+      loadActivity(id);
+    } else {
+      navigateTo('/activities')
+    }
+  }, [loadActivity, id, navigateTo])
+  
+  if(!selectedActivity || loadingInitial) {
+    return <Loading />
+  }
+
   if(selectedActivity) {
     return (
-      <Card fluid>
-      <Image src={`/assets/categoryImages/${selectedActivity.category}.jpg`} />
-      <Card.Content>
-        <Card.Header>{selectedActivity.title}</Card.Header>
-        <Card.Meta>
-          <span>{selectedActivity.date}</span>
-        </Card.Meta>
-        <Card.Description>
-          {selectedActivity.description}
-        </Card.Description>
-      </Card.Content>
-      <Card.Content extra>
-          <Button.Group widths='2'>
-              <Button basic color="blue" content="Edit" onClick={() => openForm(selectedActivity.id)}/>
-              <Button basic color="grey" content="Cancel" onClick={cancelSelectedActivity} />
-          </Button.Group>
-      </Card.Content>
-    </Card>
+      <Grid>
+        <Grid.Column width={10}>
+          <ActivityDetailsHeader activity={selectedActivity} />
+          <ActivityDetailsInfo activity={selectedActivity} />
+          <ActivityDetailsChat />
+        </Grid.Column>
+        <Grid.Column width={6}>
+          <ActivityDetailsSidebar />
+        </Grid.Column>
+      </Grid>
     )
   }
   return null;

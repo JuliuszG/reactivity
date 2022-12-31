@@ -1,77 +1,98 @@
 import { useFormik } from "formik";
 import { observer } from "mobx-react-lite";
-import { useMemo } from "react";
+import { useCallback, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, Form, Segment } from "semantic-ui-react";
+import { Loading } from "../../../app/layout/Loading";
 import { useStore } from "../../../app/stores/Store";
 
 export const ActivityForm = observer(() => {
 
   const {activityStore} = useStore();
-  const {selectedActivity, closeForm, createActivity, editActivity, loading} = activityStore;
+  const {createActivity, editActivity, loading, loadActivity, loadingInitial} = activityStore;
+  const {id} = useParams();
+  const navigateTo = useNavigate()
 
-  const initialValues = useMemo(
-    () =>
-      selectedActivity ?? {
-        id: "",
-        title: "",
-        date: "",
-        description: "",
-        category: "",
-        city: "",
-        venue: "",
-      },
-    [selectedActivity]
-  );
-
-  const formik = useFormik({
-    initialValues,
-    onSubmit: (values) => {
+  const { setValues, handleChange, handleSubmit, values } = useFormik({
+    initialValues: {
+      id: "",
+      title: "",
+      date: "",
+      description: "",
+      category: "",
+      city: "",
+      venue: "",
+  },
+    onSubmit: async (values) => { 
      if(!values.id.length) {
-      createActivity(values);
+      await createActivity(values);
      } else {
-      editActivity(values);
-     }
+      await editActivity(values);
+     }  
+     navigateTo(`/activities/${id ?? ''}`)
     },
   });
 
+
+  const loadFormValues = useCallback(
+    () => {
+      if(id) {
+        loadActivity(id)
+        .then(activity => {
+          activity && setValues(activity)
+        })
+      }
+      
+    },
+    [id, loadActivity, setValues],
+  )
+
+  useEffect(() => {
+    loadFormValues()
+  }, [loadFormValues])
+
+  if(loadingInitial) {
+    return <Loading />
+  }
+
   return (
     <Segment clearing>
-      <Form onSubmit={formik.handleSubmit} autoComplete="off">
+      <Form onSubmit={handleSubmit} autoComplete="off">
         <Form.Input
           placeholder="Title"
-          value={formik.values.title}
-          onChange={formik.handleChange}
+          value={values.title}
+          onChange={handleChange}
           name="title"
         />
         <Form.TextArea
           placeholder="Description"
-          value={formik.values.description}
-          onChange={formik.handleChange}
+          value={values.description}
+          onChange={handleChange}
           name="description"
         />
         <Form.Input
           placeholder="Category"
-          value={formik.values.category}
-          onChange={formik.handleChange}
+          value={values.category}
+          onChange={handleChange}
           name="category"
         />
         <Form.Input
           placeholder="Date"
           type="date"
-          value={formik.values.date}
-          onChange={formik.handleChange}
+          value={values.date}
+          onChange={handleChange}
           name="date"
         />
         <Form.Input
           placeholder="City"
-          value={formik.values.city}
-          onChange={formik.handleChange}
+          value={values.city}
+          onChange={handleChange}
           name="city"
         />
         <Form.Input
           placeholder="Venue"
-          value={formik.values.venue}
-          onChange={formik.handleChange}
+          value={values.venue}
+          onChange={handleChange}
           name="venue"
         />
         <Button loading={loading} floated="right" positive type="submit" content="Submit" />
@@ -79,7 +100,8 @@ export const ActivityForm = observer(() => {
           floated="right"
           type="button"
           content="Cancel"
-          onClick={closeForm}
+          as={Link}
+          to={`/activities/${id ?? ''}`}
         />
       </Form>
     </Segment>
